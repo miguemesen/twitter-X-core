@@ -130,6 +130,52 @@ router.patch('/removeFollowing', async (req, res) => {
   }
 })
 
+
+router.get('/getTweetsById', async (req,res) => {
+  const {user_id} = req.query;
+  try {
+    const query = `SELECT tweets.tweet_id, tweets.paragraph, tweets.date, tweets.user_id, users.username, users.email, users.user_id
+    FROM tweets
+    JOIN users ON users.user_id = tweets.user_id
+    WHERE tweets.user_id = $1
+    ORDER BY tweets.date DESC;` 
+    const result = await pool.query(query, [user_id])
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
+router.get('/getProfileById', async (req, res) => {
+  const {user_id} = req.query;
+  try {
+    const query = `SELECT u.user_id, u.username, u.email, u.password, u.following, u.followers,
+    array_agg(DISTINCT uf.username) AS following_usernames,
+    array_agg(DISTINCT uf.email) AS following_emails,
+    array_agg(DISTINCT uf.user_id) AS following_ids,
+    array_agg(DISTINCT ur.username) AS followers_usernames,
+    array_agg(DISTINCT ur.email) AS followers_emails,
+    array_agg(DISTINCT ur.user_id) AS followers_ids
+FROM users u
+LEFT JOIN LATERAL (
+ SELECT username, email, user_id
+ FROM users
+ WHERE u.following @> ARRAY[user_id]
+) AS uf ON TRUE
+LEFT JOIN LATERAL (
+ SELECT username, email, user_id
+ FROM users
+ WHERE u.followers @> ARRAY[user_id]
+) AS ur ON TRUE
+WHERE u.user_id = $1
+GROUP BY u.user_id;`
+    const result = await pool.query(query, [user_id])
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
