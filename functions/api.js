@@ -76,6 +76,60 @@ router.get('/getMyFeed', async (req, res) => {
   }
 })
 
+
+router.patch('/addFollower', async (req, res) => {
+  const {user_id, new_follower_id} = req.body;
+  try {
+    const query = `UPDATE users
+    SET followers = followers || $1
+    WHERE user_id = $2;`
+    await pool.query(query, [new_follower_id, user_id])
+    res.json({message: 'Follower added successfully'})
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
+router.patch('/removeFollower', async (req, res) => {
+  const {user_id, remove_follower_id} = req.body;
+  try {
+    const query = `UPDATE users
+    SET followers = ARRAY_REMOVE(followers, $1)
+    WHERE user_id = $2;`
+    await pool.query(query, [remove_follower_id, user_id])
+    res.json({message: 'Follower removed successfully'})
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
+router.patch('/addFollowing', async (req, res) => {
+  const {user_id, new_following_id} = req.body;
+  try {
+    const query = `UPDATE users
+    SET following = following || $1
+    WHERE user_id = $2;`
+    await pool.query(query, [new_following_id, user_id])
+    res.json({message: 'Following added successfully'})
+  } catch (error) {
+    console.log('print: error: ', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
+router.patch('/removeFollowing', async (req, res) => {
+  const {user_id, remove_following_id} = req.body;
+  try {
+    const query = `UPDATE users
+    SET following = ARRAY_REMOVE(following, $1)
+    WHERE user_id = $2;`
+    await pool.query(query, [remove_following_id, user_id])
+    res.json({message: 'Following removed successfully'})
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
