@@ -76,12 +76,11 @@ router.get('/getMyFeed', async (req, res) => {
   }
 })
 
-
 router.patch('/addFollower', async (req, res) => {
   const {user_id, new_follower_id} = req.body;
   try {
     const query = `UPDATE users
-    SET followers = followers || $1
+    SET followers = array_append(followers, $1)
     WHERE user_id = $2;`
     await pool.query(query, [new_follower_id, user_id])
     res.json({message: 'Follower added successfully'})
@@ -107,7 +106,7 @@ router.patch('/addFollowing', async (req, res) => {
   const {user_id, new_following_id} = req.body;
   try {
     const query = `UPDATE users
-    SET following = following || $1
+    SET following = array_append(following, $1)
     WHERE user_id = $2;`
     await pool.query(query, [new_following_id, user_id])
     res.json({message: 'Following added successfully'})
@@ -129,7 +128,6 @@ router.patch('/removeFollowing', async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 })
-
 
 router.get('/getTweetsById', async (req,res) => {
   const {user_id} = req.query;
@@ -173,6 +171,19 @@ GROUP BY u.user_id;`
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
+router.get('/', async (req, res) => {
+  try {
+    // Query the database using the connection pool
+    const result = await pool.query('SELECT * FROM users');
+    
+    // Send the response with the data
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error executing query', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 })
 
