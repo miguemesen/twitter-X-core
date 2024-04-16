@@ -61,6 +61,21 @@ router.post('/createPost', async (req, res) => {
   }
 })
 
+router.get('/getMyFeed', async (req, res) => {
+  const {user_id} = req.query;
+  try {
+    const query = `SELECT tweets.tweet_id, tweets.paragraph, tweets.date, tweets.user_id, users.username, users.email, users.user_id
+    FROM tweets
+    JOIN users ON users.user_id = tweets.user_id
+    WHERE tweets.user_id = $1 OR users.user_id = ANY(SELECT unnest(following) FROM users WHERE user_id = $1)
+    ORDER BY tweets.date DESC;` 
+    const result = await pool.query(query, [user_id])
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
