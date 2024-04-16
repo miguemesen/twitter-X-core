@@ -50,6 +50,17 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.post('/createPost', async (req, res) => {
+  const {paragraph, user_id} = req.body;
+  try {
+    const query = `insert into tweets (paragraph, user_id) values ($1,$2);`
+    await pool.query(query, [paragraph, user_id])
+    res.json({message: 'Tweet created successfully'})
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+})
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
