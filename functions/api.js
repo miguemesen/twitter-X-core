@@ -36,6 +36,20 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/register', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  try {
+    const query = `insert into users (username, email, password, following, followers) values
+    ($1, $2, $3, array[]::integer[], array[]::integer[]) returning user_id;`;
+    const result = await pool.query(query, [username,email,password]);
+
+    res.json({ message: 'Register successful', user_id: result.rows[0].user_id });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
